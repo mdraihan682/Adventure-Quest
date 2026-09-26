@@ -31,21 +31,38 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
       
-      - name: Find Android project
+      - name: List repo contents
         run: |
-          find . -name "gradlew" -type f
+          echo "=== Repo root ==="
           ls -la
+          echo "=== All files ==="
+          find . -type f -name "*.gradle*" -o -name "gradlew" | head -20
       
       - name: Build Debug APK
         run: |
-          # Find the android directory with gradlew
-          ANDROID_DIR=$(find . -name "gradlew" -type f | head -1 | xargs dirname)
-          echo "Android dir: $ANDROID_DIR"
+          # Find gradlew
+          GRADLEW=$(find . -name "gradlew" -type f | head -1)
+          if [ -z "$GRADLEW" ]; then
+            echo "ERROR: No gradlew found! Android project not in repo."
+            echo "Repo structure:"
+            find . -type f | head -30
+            exit 1
+          fi
+          ANDROID_DIR=$(dirname "$GRADLEW")
+          echo "Found Android project at: $ANDROID_DIR"
           cd "$ANDROID_DIR"
           chmod +x gradlew
+          
           # Sync game assets from repo root
           REPO_ROOT=$(git rev-parse --show-toplevel)
-          rsync -av --exclude='android' --delete "$REPO_ROOT/game/" app/src/main/assets/game/
+          echo "Repo root: $REPO_ROOT"
+          if [ -d "$REPO_ROOT/game" ]; then
+            rsync -av --exclude='android' --delete "$REPO_ROOT/game/" app/src/main/assets/game/
+          else
+            echo "WARNING: $REPO_ROOT/game not found"
+            ls -la "$REPO_ROOT"
+          fi
+          
           ./gradlew assembleDebug
       
       - name: Upload Debug APK
