@@ -12,12 +12,17 @@ jobs:
           distribution: temurin
           java-version: '17'
           
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: '12.0'  # Use version that exists
-          packages: 'platforms;android-36 build-tools;36.0.0 platform-tools ndk;27.0.12077973'
-          
+      - name: Setup Android SDK (Manual)
+        run: |
+          ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          mv cmdline-tools latest
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "ndk;27.0.12077973"
+      
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -25,22 +30,26 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
-      - name: Sync game assets
+      
+      - name: Find Android project
         run: |
-          cd android
-          rsync -av --exclude='android' --delete ../game/ app/src/main/assets/game/
-
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
-
+          find . -name "gradlew" -type f
+          ls -la
+      
       - name: Build Debug APK
         run: |
-          cd android
+          # Find the android directory with gradlew
+          ANDROID_DIR=$(find . -name "gradlew" -type f | head -1 | xargs dirname)
+          echo "Android dir: $ANDROID_DIR"
+          cd "$ANDROID_DIR"
+          chmod +x gradlew
+          # Sync game assets from repo root
+          REPO_ROOT=$(git rev-parse --show-toplevel)
+          rsync -av --exclude='android' --delete "$REPO_ROOT/game/" app/src/main/assets/game/
           ./gradlew assembleDebug
-
+      
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: '**/app/build/outputs/apk/debug/app-debug.apk'
