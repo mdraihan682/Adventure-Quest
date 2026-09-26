@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Adventure Quest</string>
+    <!-- Production AdMob IDs - REPLACE WITH YOUR ACTUAL IDs FROM ADMOB CONSOLE -->
+    <string name="admob_app_id">ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX</string>
+    <string name="admob_banner_id">ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX</string>
+    <string name="admob_interstitial_id">ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX</string>
+    <string name="admob_rewarded_id">ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX</string>
+</resources>

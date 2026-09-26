@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="100-Level 2D Action-Platform Adventure Game">
+    <title>Adventure Quest</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Polyfills for older WebViews (Android 7+ / Chrome 51+)
+        if (!window.Promise) { document.write('<script src="js/polyfills/promise.min.js"><\/script>'); }
+        if (!window.fetch) { document.write('<script src="js/polyfills/fetch.min.js"><\/script>'); }
+        if (!Object.assign) { document.write('<script src="js/polyfills/object-assign.min.js"><\/script>'); }
+        if (!Array.from) { document.write('<script src="js/polyfills/array-from.min.js"><\/script>'); }
+        if (!Number.isInteger) { document.write('<script src="js/polyfills/number-isinteger.min.js"><\/script>'); }
+        if (!Math.trunc) { document.write('<script src="js/polyfills/math-trunc.min.js"><\/script>'); }
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="touch-controls" class="hidden">
+            <div id="joystick-zone">
+                <div id="joystick-stick"><span></span></div>
+            </div>
+            <div class="control-jump" id="btn-jump"><span></span></div>
+            <div class="control-attack" id="btn-attack"><span></span></div>
+            <div class="control-pause" id="btn-pause"><span></span></div>
+        </div>
+        <div id="ui-overlay"></div>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/collision.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemy.js"></script>
+    <script src="js/boss.js"></script>
+    <script src="js/level.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/levelGenerator.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
