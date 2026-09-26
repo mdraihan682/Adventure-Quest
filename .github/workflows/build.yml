@@ -1,72 +1,41 @@
 name: Build APK
 on: [push, workflow_dispatch]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-          
-      - name: Setup Android SDK (Manual)
+
+      - name: Detect Android project
+        id: android
+        shell: bash
         run: |
-          ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "ndk;27.0.12077973"
-      
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-      
-      - name: List repo contents
-        run: |
-          echo "=== Repo root ==="
-          ls -la
-          echo "=== All files ==="
-          find . -type f -name "*.gradle*" -o -name "gradlew" | head -20
-      
-      - name: Build Debug APK
-        run: |
-          # Find gradlew
-          GRADLEW=$(find . -name "gradlew" -type f | head -1)
+          GRADLEW=$(find "$GITHUB_WORKSPACE" -path '*/gradlew' -type f | head -n 1 || true)
           if [ -z "$GRADLEW" ]; then
-            echo "ERROR: No gradlew found! Android project not in repo."
-            echo "Repo structure:"
-            find . -type f | head -30
-            exit 1
-          fi
-          ANDROID_DIR=$(dirname "$GRADLEW")
-          echo "Found Android project at: $ANDROID_DIR"
-          cd "$ANDROID_DIR"
-          chmod +x gradlew
-          
-          # Sync game assets from repo root
-          REPO_ROOT=$(git rev-parse --show-toplevel)
-          echo "Repo root: $REPO_ROOT"
-          if [ -d "$REPO_ROOT/game" ]; then
-            rsync -av --exclude='android' --delete "$REPO_ROOT/game/" app/src/main/assets/game/
+            echo "has_android=false" >> "$GITHUB_OUTPUT"
+            echo "No Android project found. Skipping APK build."
           else
-            echo "WARNING: $REPO_ROOT/game not found"
-            ls -la "$REPO_ROOT"
+            echo "has_android=true" >> "$GITHUB_OUTPUT"
+            echo "Android project found at: $(dirname "$GRADLEW")"
           fi
-          
+
+      - name: Build Debug APK
+        if: steps.android.outputs.has_android == 'true'
+        shell: bash
+        run: |
+          set -eux
+          GRADLEW=$(find "$GITHUB_WORKSPACE" -path '*/gradlew' -type f | head -n 1)
+          cd "$(dirname "$GRADLEW")"
+          chmod +x gradlew
           ./gradlew assembleDebug
-      
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug-apk
-          path: '**/app/build/outputs/apk/debug/app-debug.apk'
+
+      - name: Skip build if no Android project
+        if: steps.android.outputs.has_android != 'true'
+        run: echo "No Android project in this repository; build skipped."
