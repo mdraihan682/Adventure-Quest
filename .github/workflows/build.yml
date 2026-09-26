@@ -1,3 +1,4 @@
+
 name: Build APK
 on: [push, workflow_dispatch]
 
@@ -12,6 +13,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Detect Android project
         id: android
@@ -35,6 +37,14 @@ jobs:
           cd "$(dirname "$GRADLEW")"
           chmod +x gradlew
           ./gradlew assembleDebug
+
+      - name: Upload APK
+        if: steps.android.outputs.has_android == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: '**/build/outputs/apk/debug/*.apk'
+          if-no-files-found: error
 
       - name: Skip build if no Android project
         if: steps.android.outputs.has_android != 'true'
